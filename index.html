@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThreadGram</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #fafafa;
+      min-height: 100vh;
+      color: #262626;
+    }
+
+    /* Header */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #dbdbdb;
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 935px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 600;
+      background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Search */
+    .search-box {
+      display: flex;
+      gap: 0.5rem;
+      flex: 1;
+      max-width: 400px;
+    }
+
+    .search-box input {
+      flex: 1;
+      padding: 0.6rem 1rem;
+      border: 1px solid #dbdbdb;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: #fafafa;
+      transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: #a8a8a8;
+      background: #fff;
+    }
+
+    .search-box button {
+      padding: 0.6rem 1.2rem;
+      background: #0095f6;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .search-box button:hover {
+      background: #1877f2;
+    }
+
+    .search-box button:disabled {
+      background: #b2dffc;
+      cursor: not-allowed;
+    }
+
+    /* Main */
+    main {
+      max-width: 935px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    /* Profile Header */
+    .profile-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid #dbdbdb;
+    }
+
+    .profile-avatar {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 1px #dbdbdb;
+    }
+
+    .profile-info {
+      text-align: center;
+    }
+
+    .profile-info h2 {
+      font-size: 1.5rem;
+      font-weight: 400;
+    }
+
+    .profile-stats {
+      display: flex;
+      gap: 2rem;
+      margin-top: 0.75rem;
+      color: #262626;
+      font-size: 1rem;
+    }
+
+    .profile-stats span strong {
+      font-weight: 600;
+    }
+
+    .download-btn {
+      margin-top: 1rem;
+      padding: 0.6rem 1.5rem;
+      background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .download-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    /* Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+    }
+
+    .grid-item {
+      aspect-ratio: 1;
+      cursor: pointer;
+      overflow: hidden;
+      position: relative;
+      background: #efefef;
+    }
+
+    .grid-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.2s, opacity 0.2s;
+    }
+
+    .grid-item:hover img {
+      transform: scale(1.02);
+      opacity: 0.9;
+    }
+
+    .grid-item .multi-indicator {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.7);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      color: #fff;
+      font-size: 2rem;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+    }
+
+    .modal-content {
+      max-width: 90vw;
+      max-height: 90vh;
+      position: relative;
+    }
+
+    .modal-content img {
+      max-width: 100%;
+      max-height: 85vh;
+      object-fit: contain;
+    }
+
+    .modal-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255,255,255,0.9);
+      color: #262626;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .modal-nav:hover {
+      background: #fff;
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    .modal-nav.prev { left: -60px; }
+    .modal-nav.next { right: -60px; }
+
+    .modal-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 1rem;
+    }
+
+    .modal-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .modal-dot.active {
+      background: #fff;
+      transform: scale(1.2);
+    }
+
+    @media (max-width: 768px) {
+      .modal-nav.prev { left: 10px; }
+      .modal-nav.next { right: 10px; }
+    }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: #262626;
+    }
+
+    .loading-animation {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .loading-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+      animation: bounce 1.4s ease-in-out infinite;
+    }
+
+    .loading-dot:nth-child(1) { animation-delay: 0s; }
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    .loading-text {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .loading-subtext {
+      font-size: 0.9rem;
+      color: #8e8e8e;
+    }
+
+    .progress-bar {
+      width: 200px;
+      height: 4px;
+      background: #dbdbdb;
+      border-radius: 2px;
+      margin: 1.5rem auto 0;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+      border-radius: 2px;
+      animation: progress 8s ease-out forwards;
+    }
+
+    @keyframes progress {
+      0% { width: 0%; }
+      20% { width: 15%; }
+      40% { width: 35%; }
+      60% { width: 55%; }
+      80% { width: 75%; }
+      100% { width: 95%; }
+    }
+
+    /* Empty State */
+    .empty {
+      text-align: center;
+      padding: 4rem 1rem;
+      color: #8e8e8e;
+    }
+
+    .empty-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Error */
+    .error {
+      background: #ffeaea;
+      color: #dc2743;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .grid {
+        gap: 2px;
+      }
+
+      .header-content {
+        flex-direction: column;
+      }
+
+      .search-box {
+        width: 100%;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <div class="logo">ThreadGram</div>
+      <div class="search-box">
+        <input type="text" id="username" placeholder="輸入 Threads 帳號 (例: boooooook__)" />
+        <button id="fetchBtn" onclick="fetchThreads()">搜尋</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="content">
+      <div class="empty">
+        <div class="empty-icon">📷</div>
+        <p>輸入 Threads 帳號來瀏覽圖片</p>
+      </div>
+    </div>
+  </main>
+
+  <div class="modal" id="modal" onclick="closeModal()">
+    <div class="modal-close">&times;</div>
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <button class="modal-nav prev" onclick="navigateModal(-1)">&#10094;</button>
+      <img id="modalImg" src="" alt="" />
+      <button class="modal-nav next" onclick="navigateModal(1)">&#10095;</button>
+      <div class="modal-dots" id="modalDots"></div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    // 從 config.js 讀取 API Key
+    const FIRECRAWL_API_KEY = CONFIG?.FIRECRAWL_API_KEY || '';
+
+    async function fetchThreads() {
+      const username = document.getElementById('username').value.trim();
+      if (!username) return;
+
+      const btn = document.getElementById('fetchBtn');
+      const content = document.getElementById('content');
+
+      btn.disabled = true;
+      btn.textContent = '載入中...';
+
+      const loadingMessages = [
+        '努力幫你爬圖中...',
+        '正在翻閱 TA 的貼文...',
+        '快好了，再等一下下...',
+        '圖片收集中，請稍候...',
+        '正在施展魔法...'
+      ];
+      const randomMsg = loadingMessages[Math.floor(Math.random() * loadingMessages.length)];
+
+      content.innerHTML = `
+        <div class="loading">
+          <div class="loading-animation">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+          </div>
+          <p class="loading-text">${randomMsg}</p>
+          <p class="loading-subtext">@${username}</p>
+          <div class="progress-bar">
+            <div class="progress-fill"></div>
+          </div>
+        </div>
+      `;
+
+      try {
+        // 呼叫 Firecrawl API（含滾動動作）
+        const response = await fetch('https://api.firecrawl.dev/v1/scrape', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${FIRECRAWL_API_KEY}`
+          },
+          body: JSON.stringify({
+            url: `https://www.threads.net/@${username}`,
+            formats: ['markdown', 'html'],
+            waitFor: 5000,
+            actions: [
+              // 等待頁面完全載入
+              { type: 'wait', milliseconds: 3000 },
+              // 慢慢往下滾動抓取更多
+              { type: 'scroll', direction: 'down', amount: 800 },
+              { type: 'wait', milliseconds: 2000 },
+              { type: 'scroll', direction: 'down', amount: 800 },
+              { type: 'wait', milliseconds: 2000 },
+              { type: 'scroll', direction: 'down', amount: 800 },
+              { type: 'wait', milliseconds: 2000 },
+              { type: 'scroll', direction: 'down', amount: 800 },
+              { type: 'wait', milliseconds: 2000 },
+              { type: 'scroll', direction: 'down', amount: 800 },
+              { type: 'wait', milliseconds: 2000 },
+              { type: 'scroll', direction: 'down', amount: 800 },
+              { type: 'wait', milliseconds: 2000 }
+            ]
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('API 請求失敗');
+        }
+
+        const data = await response.json();
+
+        // Debug: 看看原始資料
+        console.log('=== Firecrawl 原始資料 ===');
+        console.log(data);
+
+        // 從回應中提取圖片
+        const images = extractImages(data);
+        console.log('=== 分組後的圖片 ===');
+        console.log(images);
+
+        if (images.length === 0) {
+          content.innerHTML = `
+            <div class="empty">
+              <div class="empty-icon">🔍</div>
+              <p>找不到圖片，請確認帳號是否正確</p>
+            </div>
+          `;
+        } else {
+          renderGrid(username, images);
+        }
+      } catch (error) {
+        console.error(error);
+        content.innerHTML = `
+          <div class="error">
+            <p>❌ 發生錯誤：${error.message}</p>
+            <p style="margin-top:0.5rem;font-size:0.9rem;">請確認 API Key 是否正確設定</p>
+          </div>
+          <div class="empty">
+            <div class="empty-icon">💡</div>
+            <p>提示：你需要設定 Firecrawl API Key</p>
+            <p style="margin-top:0.5rem;font-size:0.9rem;color:#8e8e8e;">
+              前往 <a href="https://www.firecrawl.dev" target="_blank">firecrawl.dev</a> 取得免費 API Key
+            </p>
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '搜尋';
+      }
+    }
+
+    function extractImages(data) {
+      const images = [];
+
+      // 從 markdown 中提取圖片
+      if (data.data?.markdown) {
+        const mdRegex = /!\[.*?\]\((https?:\/\/[^\s\)]+)\)/g;
+        let match;
+        while ((match = mdRegex.exec(data.data.markdown)) !== null) {
+          if (isValidImage(match[1])) {
+            images.push(match[1]);
+          }
+        }
+      }
+
+      // 從 HTML 中提取圖片
+      if (data.data?.html) {
+        const imgRegex = /<img[^>]+src=["']([^"']+)["']/g;
+        let match;
+        while ((match = imgRegex.exec(data.data.html)) !== null) {
+          if (isValidImage(match[1]) && !images.includes(match[1])) {
+            images.push(match[1]);
+          }
+        }
+      }
+
+      // 從 metadata 中提取圖片
+      if (data.data?.metadata?.ogImage) {
+        const ogImg = data.data.metadata.ogImage;
+        if (isValidImage(ogImg) && !images.includes(ogImg)) {
+          images.push(ogImg);
+        }
+      }
+
+      // 分組並去重
+      return groupAndDeduplicateImages(images);
+    }
+
+    function isValidImage(url) {
+      // 過濾掉小圖標和非貼文圖片
+      const excludePatterns = [
+        'favicon',
+        'logo',
+        'icon',
+        'emoji',
+        'static'
+      ];
+
+      const lowerUrl = url.toLowerCase();
+      return !excludePatterns.some(p => lowerUrl.includes(p));
+    }
+
+    // 提取圖片的唯一 ID（檔名部分）
+    function getImageId(url) {
+      // 從 URL 中提取檔名 ID，例如 "606512785_17937444174111576_6523247945573465311_n"
+      const match = url.match(/(\d+_\d+_\d+_n)/);
+      return match ? match[1] : url;
+    }
+
+    // 計算圖片尺寸優先級（越大越好）
+    function getImagePriority(url) {
+      if (url.includes('s150x150')) return 1;
+      if (url.includes('s320x320')) return 2;
+      if (url.includes('s640x640')) return 3;
+      return 4; // 無尺寸標記 = 原圖，最高優先
+    }
+
+    // 取得貼文 ID（用於分組同一篇貼文的圖片）
+    function getPostId(url) {
+      // 嘗試從 URL 提取貼文 ID（第二組數字）
+      const match = url.match(/\d+_(\d+)_\d+_n/);
+      return match ? match[1] : null;
+    }
+
+    // 分組並去重
+    function groupAndDeduplicateImages(images) {
+      const postGroups = new Map(); // postId -> [images]
+      const seenImageIds = new Set();
+
+      images.forEach(url => {
+        const imageId = getImageId(url);
+        const postId = getPostId(url);
+        const priority = getImagePriority(url);
+
+        // 跳過已處理過的圖片 ID（不同尺寸）
+        if (seenImageIds.has(imageId)) {
+          // 檢查是否要替換成更高優先級的版本
+          for (const [pid, imgs] of postGroups) {
+            const idx = imgs.findIndex(img => getImageId(img) === imageId);
+            if (idx !== -1 && priority > getImagePriority(imgs[idx])) {
+              imgs[idx] = url;
+            }
+          }
+          return;
+        }
+
+        seenImageIds.add(imageId);
+
+        if (postId) {
+          if (!postGroups.has(postId)) {
+            postGroups.set(postId, []);
+          }
+          postGroups.get(postId).push(url);
+        } else {
+          // 無法識別貼文 ID 的圖片獨立成一組
+          postGroups.set('single_' + imageId, [url]);
+        }
+      });
+
+      // 轉換成陣列格式
+      return Array.from(postGroups.values());
+    }
+
+    // 使用代理繞過 CORS
+    function proxyImage(url) {
+      return `https://wsrv.nl/?url=${encodeURIComponent(url)}`;
+    }
+
+    function renderGrid(username, postGroups) {
+      const content = document.getElementById('content');
+
+      // 第一組的第一張圖作為頭貼
+      const avatarSrc = postGroups.length > 0 && postGroups[0].length > 0
+        ? proxyImage(postGroups[0][0]) : '';
+      const gridPosts = postGroups.slice(1); // 其餘貼文顯示在網格
+
+      // 計算總圖片數
+      const totalImages = gridPosts.reduce((sum, post) => sum + post.length, 0);
+
+      content.innerHTML = `
+        <div class="profile-header">
+          ${avatarSrc ? `<img class="profile-avatar" src="${avatarSrc}" alt="頭貼" />` : ''}
+          <div class="profile-info">
+            <h2>${username}</h2>
+            <div class="profile-stats">
+              <span><strong>${gridPosts.length}</strong> 貼文</span>
+            </div>
+          </div>
+          <button class="download-btn" onclick="downloadAll()">Download All</button>
+        </div>
+        <div class="grid" id="grid"></div>
+      `;
+
+      const grid = document.getElementById('grid');
+
+      gridPosts.forEach((postImages, postIndex) => {
+        const item = document.createElement('div');
+        item.className = 'grid-item';
+        const proxiedImages = postImages.map(src => proxyImage(src));
+        const firstImage = proxiedImages[0];
+
+        let html = `<img src="${firstImage}" alt="貼文 ${postIndex + 1}" loading="lazy" onerror="this.parentElement.style.display='none'" />`;
+
+        // 多圖指示器
+        if (postImages.length > 1) {
+          html += `<div class="multi-indicator">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H6v-2h6v2zm4-4H6v-2h10v2zm0-4H6V7h10v2z"/>
+            </svg>
+            ${postImages.length}
+          </div>`;
+        }
+
+        item.innerHTML = html;
+        item.onclick = () => openModal(proxiedImages, 0);
+        grid.appendChild(item);
+      });
+
+      // 儲存所有圖片供下載用
+      window.currentImages = gridPosts.flat().map(src => proxyImage(src));
+      window.currentPosts = gridPosts;
+    }
+
+    async function downloadAll() {
+      if (!window.currentImages || window.currentImages.length === 0) return;
+
+      for (let i = 0; i < window.currentImages.length; i++) {
+        const url = window.currentImages[i];
+        try {
+          const response = await fetch(url);
+          const blob = await response.blob();
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = `image_${i + 1}.jpg`;
+          link.click();
+          URL.revokeObjectURL(link.href);
+          // 間隔下載避免瀏覽器阻擋
+          await new Promise(r => setTimeout(r, 300));
+        } catch (e) {
+          console.error('下載失敗:', e);
+        }
+      }
+    }
+
+    // Modal 輪播相關
+    let currentModalImages = [];
+    let currentModalIndex = 0;
+
+    function openModal(images, startIndex = 0) {
+      currentModalImages = images;
+      currentModalIndex = startIndex;
+
+      const modal = document.getElementById('modal');
+      updateModalImage();
+      updateModalDots();
+      updateNavButtons();
+
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function updateModalImage() {
+      const modalImg = document.getElementById('modalImg');
+      modalImg.src = currentModalImages[currentModalIndex];
+    }
+
+    function updateModalDots() {
+      const dotsContainer = document.getElementById('modalDots');
+
+      if (currentModalImages.length <= 1) {
+        dotsContainer.innerHTML = '';
+        return;
+      }
+
+      dotsContainer.innerHTML = currentModalImages.map((_, i) =>
+        `<div class="modal-dot ${i === currentModalIndex ? 'active' : ''}" onclick="goToSlide(${i})"></div>`
+      ).join('');
+    }
+
+    function updateNavButtons() {
+      const prevBtn = document.querySelector('.modal-nav.prev');
+      const nextBtn = document.querySelector('.modal-nav.next');
+
+      if (currentModalImages.length <= 1) {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+      } else {
+        prevBtn.style.display = 'flex';
+        nextBtn.style.display = 'flex';
+        prevBtn.style.opacity = currentModalIndex === 0 ? '0.3' : '1';
+        nextBtn.style.opacity = currentModalIndex === currentModalImages.length - 1 ? '0.3' : '1';
+      }
+    }
+
+    function navigateModal(direction) {
+      event.stopPropagation();
+      const newIndex = currentModalIndex + direction;
+
+      if (newIndex >= 0 && newIndex < currentModalImages.length) {
+        currentModalIndex = newIndex;
+        updateModalImage();
+        updateModalDots();
+        updateNavButtons();
+      }
+    }
+
+    function goToSlide(index) {
+      event.stopPropagation();
+      currentModalIndex = index;
+      updateModalImage();
+      updateModalDots();
+      updateNavButtons();
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('modal');
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+      currentModalImages = [];
+      currentModalIndex = 0;
+    }
+
+    // 鍵盤控制
+    document.addEventListener('keydown', (e) => {
+      if (!document.getElementById('modal').classList.contains('active')) return;
+
+      if (e.key === 'Escape') closeModal();
+      if (e.key === 'ArrowLeft') navigateModal(-1);
+      if (e.key === 'ArrowRight') navigateModal(1);
+    });
+
+    // Enter 送出搜尋
+    document.getElementById('username').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') fetchThreads();
+    });
+  </script>
+</body>
+</html>
