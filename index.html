@@ -91,6 +91,22 @@
       cursor: not-allowed;
     }
 
+    .file-btn {
+      padding: 0.6rem 1rem;
+      background: #262626;
+      color: #fff;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .file-btn:hover {
+      background: #444;
+    }
+
     /* Main */
     main {
       max-width: 935px;
@@ -404,6 +420,10 @@
       <div class="search-box">
         <input type="text" id="username" placeholder="輸入 Threads 帳號 (例: boooooook__)" />
         <button id="fetchBtn" onclick="fetchThreads()">搜尋</button>
+        <label class="file-btn">
+          📁 讀取 JSON
+          <input type="file" id="jsonFile" accept=".json" onchange="loadLocalJson(event)" hidden />
+        </label>
       </div>
     </div>
   </header>
@@ -480,26 +500,12 @@
             waitFor: 3000,
             actions: [
               { type: 'wait', milliseconds: 2000 },
-              { type: 'scroll', direction: 'down', amount: 1000 },
-              { type: 'wait', milliseconds: 1500 },
-              { type: 'scroll', direction: 'down', amount: 1000 },
-              { type: 'wait', milliseconds: 1500 },
-              { type: 'scroll', direction: 'down', amount: 1000 },
-              { type: 'wait', milliseconds: 1500 },
-              { type: 'scroll', direction: 'down', amount: 1000 },
-              { type: 'wait', milliseconds: 1500 },
-              { type: 'scroll', direction: 'down', amount: 1000 },
-              { type: 'wait', milliseconds: 1500 },
-              { type: 'scroll', direction: 'down', amount: 1000 },
-              { type: 'wait', milliseconds: 1500 },
-              { type: 'scroll', direction: 'down', amount: 1000 },
-              { type: 'wait', milliseconds: 1500 },
-              { type: 'scroll', direction: 'down', amount: 1000 },
-              { type: 'wait', milliseconds: 1500 },
-              { type: 'scroll', direction: 'down', amount: 1000 },
-              { type: 'wait', milliseconds: 1500 },
-              { type: 'scroll', direction: 'down', amount: 1000 },
-              { type: 'wait', milliseconds: 1500 }
+              { type: 'scroll', direction: 'down', amount: 2000 },
+              { type: 'wait', milliseconds: 2000 },
+              { type: 'scroll', direction: 'down', amount: 2000 },
+              { type: 'wait', milliseconds: 2000 },
+              { type: 'scroll', direction: 'down', amount: 2000 },
+              { type: 'wait', milliseconds: 2000 }
             ]
           })
         });
@@ -864,6 +870,34 @@
     document.getElementById('username').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') fetchThreads();
     });
+
+    // 讀取本地 JSON 檔案（Python 爬蟲產出的）
+    function loadLocalJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          console.log('=== 載入 JSON ===', data);
+
+          if (data.posts && data.username) {
+            // Python 爬蟲格式
+            const posts = data.posts.map(post =>
+              Array.isArray(post) ? post : [post]
+            );
+            renderGrid(data.username, posts);
+          } else {
+            alert('JSON 格式不正確');
+          }
+        } catch (err) {
+          console.error(err);
+          alert('無法解析 JSON 檔案');
+        }
+      };
+      reader.readAsText(file);
+    }
   </script>
 </body>
 </html>
