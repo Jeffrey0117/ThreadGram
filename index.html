@@ -476,24 +476,30 @@
           },
           body: JSON.stringify({
             url: `https://www.threads.net/@${username}`,
-            formats: ['markdown', 'html'],
-            waitFor: 5000,
+            formats: ['markdown'],
+            waitFor: 3000,
             actions: [
-              // 等待頁面完全載入
-              { type: 'wait', milliseconds: 3000 },
-              // 慢慢往下滾動抓取更多
-              { type: 'scroll', direction: 'down', amount: 800 },
               { type: 'wait', milliseconds: 2000 },
-              { type: 'scroll', direction: 'down', amount: 800 },
-              { type: 'wait', milliseconds: 2000 },
-              { type: 'scroll', direction: 'down', amount: 800 },
-              { type: 'wait', milliseconds: 2000 },
-              { type: 'scroll', direction: 'down', amount: 800 },
-              { type: 'wait', milliseconds: 2000 },
-              { type: 'scroll', direction: 'down', amount: 800 },
-              { type: 'wait', milliseconds: 2000 },
-              { type: 'scroll', direction: 'down', amount: 800 },
-              { type: 'wait', milliseconds: 2000 }
+              { type: 'scroll', direction: 'down', amount: 1000 },
+              { type: 'wait', milliseconds: 1500 },
+              { type: 'scroll', direction: 'down', amount: 1000 },
+              { type: 'wait', milliseconds: 1500 },
+              { type: 'scroll', direction: 'down', amount: 1000 },
+              { type: 'wait', milliseconds: 1500 },
+              { type: 'scroll', direction: 'down', amount: 1000 },
+              { type: 'wait', milliseconds: 1500 },
+              { type: 'scroll', direction: 'down', amount: 1000 },
+              { type: 'wait', milliseconds: 1500 },
+              { type: 'scroll', direction: 'down', amount: 1000 },
+              { type: 'wait', milliseconds: 1500 },
+              { type: 'scroll', direction: 'down', amount: 1000 },
+              { type: 'wait', milliseconds: 1500 },
+              { type: 'scroll', direction: 'down', amount: 1000 },
+              { type: 'wait', milliseconds: 1500 },
+              { type: 'scroll', direction: 'down', amount: 1000 },
+              { type: 'wait', milliseconds: 1500 },
+              { type: 'scroll', direction: 'down', amount: 1000 },
+              { type: 'wait', milliseconds: 1500 }
             ]
           })
         });
@@ -757,10 +763,18 @@
     // Modal 輪播相關
     let currentModalImages = [];
     let currentModalIndex = 0;
+    let preloadedImages = []; // 預載圖片
 
     function openModal(images, startIndex = 0) {
       currentModalImages = images;
       currentModalIndex = startIndex;
+
+      // 預載所有圖片
+      preloadedImages = images.map(src => {
+        const img = new Image();
+        img.src = src;
+        return img;
+      });
 
       const modal = document.getElementById('modal');
       updateModalImage();
@@ -773,7 +787,12 @@
 
     function updateModalImage() {
       const modalImg = document.getElementById('modalImg');
-      modalImg.src = currentModalImages[currentModalIndex];
+      // 直接用預載的圖片
+      if (preloadedImages[currentModalIndex]?.complete) {
+        modalImg.src = preloadedImages[currentModalIndex].src;
+      } else {
+        modalImg.src = currentModalImages[currentModalIndex];
+      }
     }
 
     function updateModalDots() {
