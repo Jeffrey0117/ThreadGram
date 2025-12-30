@@ -545,40 +545,56 @@
     }
 
     function extractImages(data) {
-      const images = [];
+      const posts = []; // 每個元素是一篇貼文的圖片陣列
 
-      // 從 markdown 中提取圖片
       if (data.data?.markdown) {
-        const mdRegex = /!\[.*?\]\((https?:\/\/[^\s\)]+)\)/g;
-        let match;
-        while ((match = mdRegex.exec(data.data.markdown)) !== null) {
-          if (isValidImage(match[1])) {
-            images.push(match[1]);
+        const md = data.data.markdown;
+
+        // 用貼文分隔符號來切分（Like/Comment/Repost/Share 區塊）
+        const postBlocks = md.split(/\nLike\n\d+/);
+
+        postBlocks.forEach(block => {
+          const blockImages = [];
+          const mdRegex = /!\[.*?\]\((https?:\/\/[^\s\)]+)\)/g;
+          let match;
+
+          while ((match = mdRegex.exec(block)) !== null) {
+            const url = match[1];
+            if (isValidImage(url) && !isProfilePic(url)) {
+              // 去重同一張圖的不同尺寸
+              const dominated = blockImages.some(existing =>
+                isSameImage(existing, url) && getImagePriority(existing) >= getImagePriority(url)
+              );
+              if (!dominated) {
+                // 移除被新圖取代的舊版本
+                const filtered = blockImages.filter(existing => !isSameImage(existing, url));
+                filtered.push(url);
+                blockImages.length = 0;
+                blockImages.push(...filtered);
+              }
+            }
           }
-        }
-      }
 
-      // 從 HTML 中提取圖片
-      if (data.data?.html) {
-        const imgRegex = /<img[^>]+src=["']([^"']+)["']/g;
-        let match;
-        while ((match = imgRegex.exec(data.data.html)) !== null) {
-          if (isValidImage(match[1]) && !images.includes(match[1])) {
-            images.push(match[1]);
+          if (blockImages.length > 0) {
+            posts.push(blockImages);
           }
-        }
+        });
       }
 
-      // 從 metadata 中提取圖片
-      if (data.data?.metadata?.ogImage) {
-        const ogImg = data.data.metadata.ogImage;
-        if (isValidImage(ogImg) && !images.includes(ogImg)) {
-          images.push(ogImg);
-        }
-      }
+      console.log('=== 分組結果 ===', posts);
+      return posts;
+    }
 
-      // 分組並去重
-      return groupAndDeduplicateImages(images);
+    // 判斷是否為頭貼
+    function isProfilePic(url) {
+      return url.includes('s150x150') || url.includes('s320x320') && url.includes('profile');
+    }
+
+    // 判斷是否為同一張圖（不同尺寸）
+    function isSameImage(url1, url2) {
+      const id1 = getImageId(url1);
+      const id2 = getImageId(url2);
+      return id1 && id2 && id1 === id2;
     }
 
     function isValidImage(url) {
@@ -612,8 +628,9 @@
 
     // 取得貼文 ID（用於分組同一篇貼文的圖片）
     function getPostId(url) {
-      // 嘗試從 URL 提取貼文 ID（第二組數字）
-      const match = url.match(/\d+_(\d+)_\d+_n/);
+      // 從 URL 提取中間那組數字的前 9 位作為貼文 ID
+      // 例如：588259931_17934686271111576_xxx_n.jpg → 179346862
+      const match = url.match(/\d+_(\d{9})/);
       return match ? match[1] : null;
     }
 
